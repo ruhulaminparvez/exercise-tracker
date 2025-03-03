@@ -58,16 +58,33 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   });
 });
 
-// Get user logs
+// Get user logs with filters
 app.get('/api/users/:_id/logs', (req, res) => {
   const { _id } = req.params;
+  const { from, to, limit } = req.query;
 
   const user = users.find((u) => u._id === _id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  const userExercises = exercises.filter((ex) => ex.userId === _id);
+  let userExercises = exercises.filter((ex) => ex.userId === _id);
+
+  // Filter by date range
+  if (from) {
+    const fromDate = new Date(from);
+    userExercises = userExercises.filter((ex) => new Date(ex.date) >= fromDate);
+  }
+
+  if (to) {
+    const toDate = new Date(to);
+    userExercises = userExercises.filter((ex) => new Date(ex.date) <= toDate);
+  }
+
+  // Limit results
+  if (limit) {
+    userExercises = userExercises.slice(0, parseInt(limit));
+  }
 
   res.json({
     username: user.username,
